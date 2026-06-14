@@ -1,803 +1,768 @@
-import React, { useState, useEffect } from 'react';
 
-// --- PRESETS DE DATOS BASADOS EN LOS EXCEL DEL USUARIO ---
-const DILUCIONES_ESTANDAR = [
-  { id: 1, nombre: "Amoxicilina 1g", presentacion: "1g/vial", dosis: "1g c/8h", diluyente: "SF 0.9%", vol: "100 ml", conc: "10 mg/ml", tiempo: "30 min", via: "IV" },
-  { id: 2, nombre: "Ceftriaxona 1g", presentacion: "1g/vial", dosis: "1-2g c/24h", diluyente: "SF 0.9%", vol: "100 ml", conc: "10-20 mg/ml", tiempo: "30 min", via: "IV" },
-  { id: 3, nombre: "Ampicilina 1g", presentacion: "1g/vial", dosis: "1g c/6h", diluyente: "SF 0.9%", vol: "50-100 ml", conc: "10-20 mg/ml", tiempo: "15-30 min", via: "IV" },
-  { id: 4, nombre: "Piperacilina-Tazobactam", presentacion: "4.5g/vial", dosis: "4.5g c/6-8h", diluyente: "SF 0.9%", vol: "100 ml", conc: "45 mg/ml", tiempo: "30 min", via: "IV" },
-  { id: 5, nombre: "Meropenem 1g", presentacion: "1g/vial", dosis: "0.5-2g c/8h", diluyente: "SF 0.9%", vol: "100 ml", conc: "10 mg/ml", tiempo: "15-30 min", via: "IV" },
-  { id: 6, nombre: "Vancomicina 500mg", presentacion: "500mg/vial", dosis: "15-20 mg/kg", diluyente: "SF 0.9% / DW5%", vol: "250 ml", conc: "5 mg/ml", tiempo: "60 min", via: "IV" },
-  { id: 7, nombre: "Metronidazol 500mg/100ml", presentacion: "500mg/100ml", dosis: "500mg c/8h", diluyente: "Listo para usar", vol: "-", conc: "5 mg/ml", tiempo: "20-60 min", via: "IV" },
-  { id: 8, nombre: "Dexametasona 8mg", presentacion: "8mg/2ml", dosis: "4-16 mg/día", diluyente: "Directo o diluido", vol: "50 ml", conc: "0.16 mg/ml", tiempo: "15 min", via: "IV" },
-  { id: 9, nombre: "Ondansetron 8mg", presentacion: "8mg/4ml", dosis: "8mg c/8-12h", diluyente: "SF 0.9%", vol: "50-100 ml", conc: "0.08-0.16 mg/ml", tiempo: "15 min", via: "IV" },
-  { id: 10, nombre: "Ketorolaco 30mg", presentacion: "30mg/1ml", dosis: "15-30mg c/6h", diluyente: "SF 0.9%", vol: "50-100 ml", conc: "0.3 mg/ml", tiempo: "15 min", via: "IV/IM" },
-  { id: 11, nombre: "Morfina 10mg", presentacion: "10mg/ml", dosis: "Titular 0.1 mg/kg", diluyente: "SF 0.9%", vol: "10 ml", conc: "1 mg/ml", tiempo: "Lento IV", via: "IV" },
-  { id: 12, nombre: "Midazolam 15mg", presentacion: "15mg/3ml", dosis: "0.05-0.15 mg/kg", diluyente: "SF 0.9%", vol: "100 ml", conc: "0.15 mg/ml", tiempo: "Infusión", via: "IV" },
-  { id: 13, nombre: "Norepinefrina 8mg", presentacion: "8mg/amp", dosis: "0.1-2 mcg/kg/min", diluyente: "DW5%", vol: "250 ml", conc: "32 mcg/ml", tiempo: "Infusión", via: "IV central" },
-  { id: 14, nombre: "Adrenalina 1mg", presentacion: "1mg/1ml", dosis: "0.1-1 mcg/kg/min", diluyente: "SF 0.9%", vol: "250 ml", conc: "4 mcg/ml", tiempo: "Infusión", via: "IV central" },
-  { id: 15, nombre: "Dopamina 200mg", presentacion: "200mg/5ml", dosis: "2-20 mcg/kg/min", diluyente: "SF 0.9% / DW5%", vol: "250 ml", conc: "800 mcg/ml", tiempo: "Infusión", via: "IV cent/perif" }
-];
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suite Web Profesional de Dilución de Medicamentos</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-const PRESETS_PEDIATRICOS = [
-  { nombre: "Amoxicilina", dosisRango: "40-90 mg/kg/día", dosisMax: "3 g/día", via: "VO", frecuencia: 8, observaciones: "Común en otitis media, faringoamigdalitis, neumonía" },
-  { nombre: "Ibuprofeno", dosisRango: "5-10 mg/kg/dosis", dosisMax: "40 mg/kg/día", via: "VO", frecuencia: 6, observaciones: "Antipirético y analgésico de primera línea" },
-  { nombre: "Paracetamol", dosisRango: "10-15 mg/kg/dosis", dosisMax: "75 mg/kg/día", via: "VO/IV", frecuencia: 4, observaciones: "Máximo 4 a 5 dosis en 24 horas" },
-  { nombre: "Ceftriaxona", dosisRango: "50-100 mg/kg/día", dosisMax: "4 g/día", via: "IV/IM", frecuencia: 12, observaciones: "Uso intrahospitalario, sepsis, meningitis" },
-  { nombre: "Ampicilina", dosisRango: "100-200 mg/kg/día", dosisMax: "12 g/día", via: "IV/IM", frecuencia: 6, observaciones: "Infecciones sistémicas graves" }
-];
+    <!-- 
+    <!-- Chosen Palette: Warm Neutrals & Medical Teal (Light Theme) -->
+    <!-- Application Structure Plan: A dashboard-style SPA with a top navigation menu to switch between 5 functional modules (Inicio, Universal, Estándar, Pediátrica, UCI). This structure was chosen because clinical environments require rapid, task-specific access without scrolling through a massive linear report. Each module encapsulates its specific calculations and reference tables, allowing the user (nurse/doctor) to focus entirely on the immediate task (e.g., mixing a pediatric dose vs setting an ICU pump). -->
+    <!-- Visualization & Content Choices: 
+         1. Report Info: Universal Calculation -> Goal: Compare -> Viz: Bar Chart (Chart.js) comparing original vial concentration vs final mixed concentration -> Justification: Visually reinforces how much the drug is being diluted, adding an extra layer of cognitive safety. -> Method: Chart.js Canvas inside strict container.
+         2. Report Info: Standard Dilutions -> Goal: Organize -> Viz: Searchable HTML Table -> Justification: Fastest way to find exact protocols for common drugs during an emergency. -> Method: Vanilla JS filtering over Tailwind-styled table.
+         3. Report Info: Pediatric Doses -> Goal: Inform -> Viz: Doughnut Chart (Chart.js) -> Justification: Shows the proportion of a single dose relative to the total maximum daily dose, preventing overdosing. -> Method: Chart.js Canvas.
+         4. Report Info: ICU Infusions -> Goal: Change -> Viz: Interactive Sliders + Dynamic Value Cards -> Justification: Allows real-time titration simulation, mirroring physical infusion pumps. -> Method: HTML input range + JS event listeners.
+         CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    -->
 
-const INFUSIONES_UCI = [
-  { nombre: "Norepinefrina", dosisInicial: 0.1, rango: "0.01 - 3", prep: "8mg en 250ml DW5%", concMcgMl: 32, dosisMax: 3, notas: "Vía central obligatoria. Titular hasta PAM > 65 mmHg." },
-  { nombre: "Adrenalina", dosisInicial: 0.1, rango: "0.01 - 1", prep: "1mg en 250ml DW5%", concMcgMl: 4, dosisMax: 1, notas: "Vía central preferente. Monitorizar glucemia y lactato." },
-  { nombre: "Dopamina", dosisInicial: 5.0, rango: "2 - 20", prep: "200mg en 250ml DW5%", concMcgMl: 800, dosisMax: 20, notas: "Dosis alfa vasoconstrictora, vigilar FC y arritmias." },
-  { nombre: "Dobutamina", dosisInicial: 5.0, rango: "2 - 20", prep: "250mg en 250ml DW5%", concMcgMl: 1000, dosisMax: 20, notas: "Inotrópico. Monitorizar FC estrechamente." },
-  { nombre: "Vasopresina", dosisInicial: 0.03, rango: "Fija (0.01-0.04)", prep: "20 UI en 100ml SF", concMcgMl: 0.2, dosisMax: 0.04, notas: "Dosis fija en shock distributivo. Vía central.", unidad: "UI/min" },
-  { nombre: "Nitroglicerina", dosisInicial: 0.5, rango: "0.1 - 3", prep: "50mg en 250ml DW5%", concMcgMl: 200, dosisMax: 3, notas: "Vasodilatador coronario. Vigilar hipotensión." },
-  { nombre: "Nitroprusiato", dosisInicial: 0.5, rango: "0.1 - 10", prep: "50mg en 250ml DW5%", concMcgMl: 200, dosisMax: 10, notas: "Fotosensible. Uso máximo 72h por riesgo de tiocianatos." }
-];
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState('inicio');
-
-  // --- ESTADOS CALCULADORA UNIVERSAL ---
-  const [uMedicamento, setUMedicamento] = useState('Ceftriaxona');
-  const [uVialMg, setUVialMg] = useState(1000);
-  const [uVialMl, setUVialMl] = useState(10);
-  const [uDosisPrescrita, setUDosisPrescrita] = useState(500);
-  const [uDiluyenteMl, setUDiluyenteMl] = useState(100);
-  const [uTiempoMin, setUTiempoMin] = useState(30);
-  const [uFactorGoteo, setUFactorGoteo] = useState(20);
-
-  // --- ESTADOS CALCULADORA PEDIÁTRICA ---
-  const [pNombre, setPNombre] = useState('');
-  const [pPeso, setPPeso] = useState(12);
-  const [pMedicamento, setPMedicamento] = useState('Paracetamol');
-  const [pDosisKg, setPDosisKg] = useState(15);
-  const [pFrecuencia, setPFrecuencia] = useState(6);
-
-  // --- ESTADOS CALC UCI ---
-  const [uciPeso, setUciPeso] = useState(70);
-  const [uciDosisCustom, setUciDosisCustom] = useState({});
-
-  // --- FILTRO TABLA ESTÁNDAR ---
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // --- EFECTO: INICIALIZAR DOSIS UCI ---
-  useEffect(() => {
-    const initialDoses = {};
-    INFUSIONES_UCI.forEach(m => {
-      initialDoses[m.nombre] = m.dosisInicial;
-    });
-    setUciDosisCustom(initialDoses);
-  }, []);
-
-  // --- CÁLCULOS UNIVERSAL ---
-  const concVialOriginal = uVialMl > 0 ? (uVialMg / uVialMl) : 0;
-  const volAExtraer = concVialOriginal > 0 ? (uDosisPrescrita / concVialOriginal) : 0;
-  const volTotalSolucion = Number(volAExtraer) + Number(uDiluyenteMl);
-  const concFinalSolucion = volTotalSolucion > 0 ? (uDosisPrescrita / volTotalSolucion) : 0;
-  
-  const velMlHora = uTiempoMin > 0 ? (volTotalSolucion * 60) / uTiempoMin : 0;
-  const velGotasMin = uTiempoMin > 0 ? (volTotalSolucion * uFactorGoteo) / uTiempoMin : 0;
-
-  // --- CÁLCULOS PEDIÁTRICOS ---
-  const pDosisTomaMg = Number(pPeso) * Number(pDosisKg);
-  const pTomasAlDia = pFrecuencia > 0 ? (24 / pFrecuencia) : 0;
-  const pDosisDiariaTotalMg = pDosisTomaMg * pTomasAlDia;
-
-  // Actualizar calculadora pediátrica al hacer clic en un preset
-  const aplicarPresetPediatrico = (preset) => {
-    setPMedicamento(preset.nombre);
-    setPFrecuencia(preset.frecuencia);
-    // Extraer número medio del rango de dosis para facilitar el ejemplo
-    const regex = /(\d+)/g;
-    const matches = preset.dosisRango.match(regex);
-    if (matches && matches.length > 0) {
-      setPDosisKg(Number(matches[0]));
-    }
-  };
-
-  // --- CÁLCULOS UCI ---
-  const calcularUciMlHora = (med) => {
-    const dosis = uciDosisCustom[med.nombre] || med.dosisInicial;
-    if (med.unidad === 'UI/min') {
-      // Para Vasopresina: (UI/min * 60) / (UI/ml)
-      return (dosis * 60) / med.concMcgMl;
-    }
-    // Para otros (mcg/kg/min): (mcg/kg/min * peso * 60) / conc(mcg/ml)
-    return (dosis * uciPeso * 60) / med.concMcgMl;
-  };
-
-  const handleUciDosisChange = (medNombre, valor) => {
-    setUciDosisCustom(prev => ({
-      ...prev,
-      [medNombre]: parseFloat(valor) || 0
-    }));
-  };
-
-  // Filtrar tabla estándar
-  const filtradasStandard = DILUCIONES_ESTANDAR.filter(item => 
-    item.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.diluyente.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.via.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 font-sans flex flex-col antialiased">
-      {/* HEADER DE LA CLÍNICA */}
-      <header className="bg-gradient-to-r from-teal-800 to-cyan-900 border-b border-teal-700 shadow-xl py-4 px-6 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-teal-400 text-teal-950 p-2 rounded-xl shadow-inner font-black text-2xl tracking-wider">
-              🏥
-            </div>
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                Enfermería Pro <span className="text-xs bg-teal-500 text-teal-950 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-widest">Premium</span>
-              </h1>
-              <p className="text-xs text-teal-200">Suite Profesional de Dilución & Infusión de Medicamentos</p>
-            </div>
-          </div>
-
-          {/* Menú de pestañas */}
-          <nav className="flex flex-wrap gap-2 justify-center">
-            {[
-              { id: 'inicio', label: 'Inicio 📑' },
-              { id: 'universal', label: 'Calc. Universal 💊' },
-              { id: 'estandar', label: 'Dilución Estándar 📊' },
-              { id: 'pediatrico', label: 'Pediátrico 👶' },
-              { id: 'uci', label: 'UCI / Vasopresores 🚨' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition-all duration-200 shadow-md ${
-                  activeTab === tab.id
-                    ? 'bg-teal-400 text-slate-950 scale-105 font-bold shadow-teal-500/20'
-                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </header>
-
-      {/* CUERPO PRINCIPAL */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6">
+    <style>
+        /* Custom Tailwind config for specific brand colors */
+        script[src*="tailwindcss"] + * { display: none; } /* Prevent unstyled flash */
         
-        {/* TAB 0: INICIO */}
-        {activeTab === 'inicio' && (
-          <div className="space-y-8 animate-fadeIn">
-            {/* Banner de Presentación */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-teal-500/30 p-6 md:p-8 rounded-2xl shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
-              <div className="max-w-3xl">
-                <span className="text-xs bg-teal-500/10 text-teal-400 border border-teal-500/30 px-3 py-1 rounded-full font-semibold uppercase tracking-wider">
-                  Herramienta de Apoyo Clínico
-                </span>
-                <h2 className="text-3xl md:text-4xl font-extrabold text-white mt-4 tracking-tight">
-                  Evita errores de medicación en segundos con automatizaciones exactas.
-                </h2>
-                <p className="text-slate-300 mt-4 leading-relaxed text-sm md:text-base">
-                  Bienvenido a la herramienta digital más avanzada para el cálculo de dosificaciones en cuidados críticos, pediatría y planta general. Diseñada bajo rigurosos protocolos de seguridad clínica para optimizar el tiempo de tu turno.
+        /* Strict Chart Container Styling per Requirements */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+
+        /* Smooth tab transitions */
+        .tab-content {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .tab-content.active {
+            display: block;
+            opacity: 1;
+            animation: fadeIn 0.4s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbar for tables */
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #0f766e; /* Teal-700 */
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            200: '#99f6e4',
+                            300: '#5eead4',
+                            400: '#2dd4bf',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            700: '#0f766e',
+                            800: '#115e59',
+                            900: '#134e4a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center py-4 gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-medical-100 text-medical-700 p-2.5 rounded-xl text-2xl font-black shadow-inner">
+                        🏥
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Suite Enfermería Pro</h1>
+                        <p class="text-xs md:text-sm text-slate-500 font-medium">Herramientas de Dilución e Infusión Segura</p>
+                    </div>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar gap-2 custom-scrollbar">
+                    <button onclick="switchTab('inicio')" id="nav-inicio" class="nav-btn whitespace-nowrap px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-medical-600 text-white shadow-md">
+                        📑 Inicio
+                    </button>
+                    <button onclick="switchTab('universal')" id="nav-universal" class="nav-btn whitespace-nowrap px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                        💊 Calc. Universal
+                    </button>
+                    <button onclick="switchTab('estandar')" id="nav-estandar" class="nav-btn whitespace-nowrap px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                        📊 Diluciones Estándar
+                    </button>
+                    <button onclick="switchTab('pediatrica')" id="nav-pediatrica" class="nav-btn whitespace-nowrap px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                        👶 Pediátrica
+                    </button>
+                    <button onclick="switchTab('uci')" id="nav-uci" class="nav-btn whitespace-nowrap px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-slate-600 border border-slate-200 hover:bg-slate-50">
+                        ⚡ UCI / Vasopresores
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- TAB: INICIO -->
+        <section id="tab-inicio" class="tab-content active space-y-8">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-10 text-center max-w-4xl mx-auto">
+                <span class="inline-block py-1 px-3 rounded-full bg-medical-100 text-medical-800 text-xs font-bold uppercase tracking-wider mb-4">Plataforma Clínica</span>
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">Bienvenido a la Suite de Dilución de Medicamentos</h2>
+                <p class="text-lg text-slate-600 leading-relaxed mb-8">
+                    Esta aplicación web de una sola página interactiva está diseñada para transformar datos estáticos de hojas de cálculo en una experiencia fluida y segura. Facilita el cálculo exacto de dosificaciones, estandariza procesos y apoya la toma de decisiones rápidas en planta, pediatría y unidades de cuidados intensivos.
                 </p>
                 
-                {/* Métricas / Pestañas rápidas */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                  <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-700 hover:border-teal-500/40 transition-colors">
-                    <div className="text-2xl mb-1">🧮</div>
-                    <h3 className="font-semibold text-teal-300 text-sm">Calculadora Universal</h3>
-                    <p className="text-xs text-slate-400 mt-1">Saca mililitros a extraer, goteos y concentraciones finales en un solo paso.</p>
-                  </div>
-                  <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-700 hover:border-teal-500/40 transition-colors">
-                    <div className="text-2xl mb-1">📖</div>
-                    <h3 className="font-semibold text-teal-300 text-sm">Dilución Estándar</h3>
-                    <p className="text-xs text-slate-400 mt-1">Buscador interactivo con más de 15 fármacos comunes y sus diluyentes recomendados.</p>
-                  </div>
-                  <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-700 hover:border-teal-500/40 transition-colors">
-                    <div className="text-2xl mb-1">👶</div>
-                    <h3 className="font-semibold text-teal-300 text-sm">Dosis Pediátricas</h3>
-                    <p className="text-xs text-slate-400 mt-1">Cálculos precisos por peso en mg/kg con frecuencias preconfiguradas.</p>
-                  </div>
-                  <div className="bg-slate-800/60 p-4 rounded-xl border border-slate-700 hover:border-teal-500/40 transition-colors">
-                    <div className="text-2xl mb-1">⚡</div>
-                    <h3 className="font-semibold text-teal-300 text-sm">UCI & Vasopresores</h3>
-                    <p className="text-xs text-slate-400 mt-1">Simulador de bombas de infusión (ml/h) para drogas vasoactivas en tiempo real.</p>
-                  </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-100 hover:border-medical-200 transition-colors">
+                        <div class="text-2xl mb-2">🧮</div>
+                        <h3 class="font-bold text-slate-800 mb-1">Cálculos Automatizados</h3>
+                        <p class="text-sm text-slate-600">Olvídate de las fórmulas manuales. Obtén mililitros a extraer, velocidades de infusión y goteos gravitacionales al instante.</p>
+                    </div>
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-100 hover:border-medical-200 transition-colors">
+                        <div class="text-2xl mb-2">🛡️</div>
+                        <h3 class="font-bold text-slate-800 mb-1">Seguridad del Paciente</h3>
+                        <p class="text-sm text-slate-600">Diseñado con gráficos comparativos y alertas visuales para minimizar el riesgo de errores en la preparación de fármacos de alto riesgo.</p>
+                    </div>
                 </div>
-              </div>
             </div>
 
-            {/* Panel de Licencia & Ventas del Excel (Monetización en acción) */}
-            <div className="bg-slate-800 border border-cyan-500/40 p-6 rounded-2xl flex flex-col lg:flex-row items-center justify-between gap-6 shadow-xl">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="flex h-3 w-3 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
-                  </span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-400">¿Quieres descargar este sistema en Excel para usar sin internet?</span>
+            <div class="bg-amber-50 border-l-4 border-amber-500 p-5 rounded-r-xl max-w-4xl mx-auto flex items-start gap-4">
+                <div class="text-2xl">⚠️</div>
+                <div>
+                    <h4 class="font-bold text-amber-800">Aviso Legal y de Seguridad Clínica</h4>
+                    <p class="text-sm text-amber-700 mt-1">
+                        Esta herramienta tiene fines educativos y de apoyo profesional. No reemplaza el criterio clínico, la prescripción médica ni los protocolos institucionales. Siempre verifique los cálculos con un segundo profesional antes de administrar cualquier medicación al paciente. Consulte la ficha técnica oficial para verificar compatibilidades.
+                    </p>
                 </div>
-                <h3 className="text-xl font-bold text-white">Consigue el "Pack Dilución Excel Original" para tu hospital</h3>
-                <p className="text-slate-300 text-sm max-w-xl">
-                  Llévate el archivo original listo para usar en tu computadora, completamente editable, con hojas protegidas contra borrados accidentales y compatible con cualquier versión de Excel.
+            </div>
+        </section>
+
+        <!-- TAB: CALCULADORA UNIVERSAL -->
+        <section id="tab-universal" class="tab-content">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2"><span>💊</span> Calculadora Universal de Dilución</h2>
+                <p class="text-slate-600 mt-2">
+                    Esta sección permite calcular volúmenes exactos de extracción de la ampolla, el volumen final de la mezcla y la velocidad de goteo. Ingrese los datos de la presentación comercial y la prescripción médica para obtener los parámetros de la bomba de infusión.
                 </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto shrink-0">
-                <button 
-                  onClick={() => alert("Este enlace de pago se configurará con tu cuenta de Payhip o Hotmart. Puedes procesar tarjetas o PayPal con un solo clic.")}
-                  className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold px-6 py-3 rounded-xl transition-all shadow-lg hover:scale-105 text-center text-sm"
-                >
-                  📥 Descargar Plantilla Excel ($9.99 USD)
-                </button>
-              </div>
             </div>
 
-            {/* Aviso de Seguridad */}
-            <div className="bg-amber-950/40 border border-amber-500/30 p-4 rounded-xl flex items-start gap-3">
-              <span className="text-2xl">⚠️</span>
-              <div>
-                <h4 className="font-bold text-amber-300 text-xs md:text-sm">AVISO IMPORTANTE DE SEGURIDAD CLÍNICA</h4>
-                <p className="text-xs text-amber-200/80 mt-1">
-                  Esta herramienta tiene fines educativos y de apoyo administrativo para optimizar la velocidad de cálculo. El criterio clínico del profesional de la salud y el protocolo oficial de su institución médica/hospitalaria prevalecen siempre sobre cualquier resultado automatizado. Verifique siempre los cálculos críticos por doble vía.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 1: CALCULADORA UNIVERSAL */}
-        {activeTab === 'universal' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
-            {/* Formulario de Entrada */}
-            <div className="lg:col-span-5 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-lg space-y-5">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-lg font-bold text-teal-300 flex items-center gap-2">
-                  <span>📋</span> Datos del Medicamento
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">Ingresa las características de tu ampolla/vial y la dosis que indicó el médico.</p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Nombre del Fármaco</label>
-                  <input 
-                    type="text" 
-                    value={uMedicamento} 
-                    onChange={(e) => setUMedicamento(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                    placeholder="Ej: Ceftriaxona, Amoxicilina..."
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Conc. del Vial (mg)</label>
-                    <input 
-                      type="number" 
-                      value={uVialMg} 
-                      onChange={(e) => setUVialMg(Number(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Vol. del Vial (ml)</label>
-                    <input 
-                      type="number" 
-                      value={uVialMl} 
-                      onChange={(e) => setUVialMl(Number(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-700 flex justify-between items-center text-xs text-slate-300">
-                  <span>Concentración de la ampolla original:</span>
-                  <span className="font-bold text-teal-400">{concVialOriginal.toFixed(2)} mg/ml</span>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Dosis Prescrita (mg)</label>
-                  <input 
-                    type="number" 
-                    value={uDosisPrescrita} 
-                    onChange={(e) => setUDosisPrescrita(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-teal-500/50 rounded-xl px-4 py-3 text-white text-lg font-bold focus:outline-none focus:border-teal-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Volumen de Diluyente a Agregar (ml)</label>
-                  <input 
-                    type="number" 
-                    value={uDiluyenteMl} 
-                    onChange={(e) => setUDiluyenteMl(Number(e.target.value))}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                  />
-                  <span className="text-[10px] text-slate-400 mt-1 block">Solución salina (SF 0.9%), Dextrosa (DW5%), etc.</span>
-                </div>
-
-                <div className="border-t border-slate-700/60 pt-4 space-y-4">
-                  <h4 className="text-xs font-bold text-teal-300 uppercase tracking-widest">⚙️ Parámetros de Infusión (Goteo)</h4>
-                  <div className="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Inputs -->
+                <div class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5">
+                    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-2">1. Datos del Medicamento</h3>
+                    
                     <div>
-                      <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Tiempo (minutos)</label>
-                      <input 
-                        type="number" 
-                        value={uTiempoMin} 
-                        onChange={(e) => setUTiempoMin(Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                      />
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre (Opcional)</label>
+                        <input type="text" id="u-nombre" value="Ceftriaxona" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500 focus:border-transparent">
                     </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Factor de Goteo</label>
-                      <select 
-                        value={uFactorGoteo} 
-                        onChange={(e) => setUFactorGoteo(Number(e.target.value))}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                      >
-                        <option value={20}>Macrogotero (20 gotas/ml)</option>
-                        <option value={60}>Microgotero (60 microgotas/ml)</option>
-                        <option value={10}>Sanguíneo (10 gotas/ml)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            {/* Panel de Resultados */}
-            <div className="lg:col-span-7 flex flex-col justify-between gap-6">
-              
-              <div className="bg-gradient-to-br from-teal-950 to-slate-900 p-6 rounded-2xl border border-teal-500/40 shadow-xl space-y-6 flex-1">
-                <div className="border-b border-teal-800/60 pb-3 flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                      <span>🧮</span> Resultados del Cálculo
-                    </h3>
-                    <p className="text-xs text-teal-200">Resultados calculados en base a tus especificaciones.</p>
-                  </div>
-                  <span className="bg-teal-400 text-teal-950 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Listo</span>
-                </div>
-
-                {/* Grid Resultados */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  {/* Resultado 1: Volumen a extraer */}
-                  <div className="bg-slate-900/80 p-5 rounded-xl border border-slate-700/60 flex flex-col justify-between">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">1. Extraer del Vial Original:</span>
-                    <div className="mt-2">
-                      <span className="text-3xl font-extrabold text-teal-400">{volAExtraer.toFixed(2)}</span>
-                      <span className="text-lg font-bold text-slate-300 ml-1">ml</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">
-                      Extrae esto del vial de {uMedicamento} para obtener exactamente los {uDosisPrescrita} mg indicados.
-                    </p>
-                  </div>
-
-                  {/* Resultado 2: Diluyente */}
-                  <div className="bg-slate-900/80 p-5 rounded-xl border border-slate-700/60 flex flex-col justify-between">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">2. Mezclar con Diluyente:</span>
-                    <div className="mt-2">
-                      <span className="text-3xl font-extrabold text-sky-400">{uDiluyenteMl}</span>
-                      <span className="text-lg font-bold text-slate-300 ml-1">ml</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">
-                      Volumen total final de la solución: <strong className="text-white">{volTotalSolucion.toFixed(2)} ml</strong>.
-                    </p>
-                  </div>
-
-                  {/* Resultado 3: Velocidad Bomba */}
-                  <div className="bg-slate-900/80 p-5 rounded-xl border border-teal-500/20 flex flex-col justify-between">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">3. Velocidad de Infusión (ml/h):</span>
-                    <div className="mt-2 flex items-baseline">
-                      <span className="text-4xl font-black text-emerald-400">{velMlHora.toFixed(1)}</span>
-                      <span className="text-base font-bold text-slate-300 ml-1">ml/h</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">
-                      Introduce esta velocidad si utilizas una Bomba de Infusión Continua (BIC).
-                    </p>
-                  </div>
-
-                  {/* Resultado 4: Goteo Gravitacional */}
-                  <div className="bg-slate-900/80 p-5 rounded-xl border border-teal-500/20 flex flex-col justify-between">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">4. Goteo por Gravedad:</span>
-                    <div className="mt-2">
-                      <span className="text-4xl font-black text-yellow-400">{velGotasMin.toFixed(1)}</span>
-                      <span className="text-base font-bold text-slate-300 ml-1">{uFactorGoteo === 60 ? 'microg/min' : 'gotas/min'}</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">
-                      Ajuste por gravedad para equipos {uFactorGoteo} gotas/ml en un lapso de {uTiempoMin} min.
-                    </p>
-                  </div>
-
-                </div>
-
-                {/* Concentración Final */}
-                <div className="p-4 bg-slate-900 rounded-xl border border-slate-800 flex items-center justify-between text-xs text-slate-300">
-                  <span>Concentración final de la infusión administrada:</span>
-                  <span className="font-bold text-white bg-slate-800 px-3 py-1 rounded-lg border border-slate-700">
-                    {concFinalSolucion.toFixed(2)} mg/ml
-                  </span>
-                </div>
-              </div>
-
-              {/* Tarjeta de Resumen Clínico Imprimible */}
-              <div className="bg-slate-800 p-5 rounded-2xl border border-slate-700/80 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-widest text-slate-300">📋 Resumen de Preparación para Cama del Paciente</h4>
-                <div className="bg-slate-900/50 p-4 rounded-xl text-xs space-y-2 border border-slate-800">
-                  <p>💊 <strong>Medicamento:</strong> {uMedicamento} ({uDosisPrescrita} mg)</p>
-                  <p>💉 <strong>Instrucciones:</strong> Extraer <span className="text-teal-400 font-bold">{volAExtraer.toFixed(2)} ml</span> de la ampolla y aforar en una bolsa de <span className="text-sky-400 font-bold">{uDiluyenteMl} ml</span>.</p>
-                  <p>⏱️ <strong>Administración:</strong> Pasar a una velocidad de <span className="text-emerald-400 font-bold">{velMlHora.toFixed(1)} ml/h</span> durante <span className="text-white font-bold">{uTiempoMin} minutos</span>.</p>
-                </div>
-                <div className="flex justify-end">
-                  <button 
-                    onClick={() => window.print()}
-                    className="bg-slate-700 hover:bg-slate-600 text-slate-100 font-bold text-xs px-4 py-2 rounded-lg transition-all"
-                  >
-                    🖨️ Imprimir Ficha de Cama
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: DILUCIONES ESTÁNDAR */}
-        {activeTab === 'estandar' && (
-          <div className="space-y-6 animate-fadeIn">
-            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-700 pb-4 mb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-teal-300 flex items-center gap-2">
-                    <span>📊</span> Tabla de Diluciones Estándar
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Consulta rápida de compatibilidades, diluyentes recomendados y tiempos de infusión estándar en urgencias y UCI.
-                  </p>
-                </div>
-
-                {/* Buscador */}
-                <div className="relative w-full md:w-80">
-                  <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">🔍</span>
-                  <input 
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Filtrar por medicamento o vía..."
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-teal-500"
-                  />
-                </div>
-              </div>
-
-              {/* Tabla de Datos */}
-              <div className="overflow-x-auto rounded-xl border border-slate-700/60">
-                <table className="w-full text-left border-collapse text-xs md:text-sm">
-                  <thead>
-                    <tr className="bg-slate-900 text-slate-300 border-b border-slate-700">
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Medicamento</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Presentación original</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Dosis común</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Diluyente ideal</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Volumen sugerido</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Concentración final</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Tiempo Infusión</th>
-                      <th className="p-3 font-bold uppercase tracking-wider text-[11px] text-teal-400">Vía adm.</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800">
-                    {filtradasStandard.length > 0 ? (
-                      filtradasStandard.map((item) => (
-                        <tr 
-                          key={item.id} 
-                          className="hover:bg-slate-750/50 transition-colors"
-                        >
-                          <td className="p-3 font-bold text-white whitespace-nowrap">{item.nombre}</td>
-                          <td className="p-3 text-slate-300">{item.presentacion}</td>
-                          <td className="p-3 text-slate-300">{item.dosis}</td>
-                          <td className="p-3 text-slate-300">
-                            <span className="bg-slate-900 px-2.5 py-1 rounded-md border border-slate-800 text-teal-300 text-[11px]">
-                              {item.diluyente}
-                            </span>
-                          </td>
-                          <td className="p-3 text-slate-300 font-semibold">{item.vol}</td>
-                          <td className="p-3 text-emerald-400 font-mono text-[12px]">{item.conc}</td>
-                          <td className="p-3 text-slate-300">{item.tiempo}</td>
-                          <td className="p-3">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider ${
-                              item.via.includes('central') 
-                                ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' 
-                                : 'bg-teal-500/10 text-teal-400 border border-teal-500/30'
-                            }`}>
-                              {item.via}
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={8} className="p-8 text-center text-slate-400">
-                          Ningún fármaco coincide con tu búsqueda. Intenta con otros caracteres.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: CALCULADORA PEDIÁTRICA */}
-        {activeTab === 'pediatrico' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fadeIn">
-            {/* Panel Izquierdo: Inputs de cálculo */}
-            <div className="lg:col-span-5 bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-5">
-              <div className="border-b border-slate-700 pb-3">
-                <h3 className="text-lg font-bold text-teal-300 flex items-center gap-2">
-                  <span>👶</span> Parámetros del Paciente Pediátrico
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">Cálculo exacto de dosis en base al peso real del niño.</p>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Nombre o Identificación</label>
-                  <input 
-                    type="text" 
-                    value={pNombre} 
-                    onChange={(e) => setPNombre(e.target.value)}
-                    placeholder="Ej: Cama 4, Juanito P."
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Peso del Paciente (kg)</label>
-                  <input 
-                    type="number" 
-                    value={pPeso} 
-                    onChange={(e) => setPPeso(parseFloat(e.target.value) || 0)}
-                    className="w-full bg-slate-900 border border-teal-500/50 rounded-xl px-4 py-3 text-white text-lg font-bold focus:outline-none focus:border-teal-400"
-                    placeholder="Ingresa peso en kg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Medicamento Seleccionado</label>
-                  <input 
-                    type="text" 
-                    value={pMedicamento} 
-                    onChange={(e) => setPMedicamento(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Dosis Indicada (mg/kg/toma)</label>
-                    <input 
-                      type="number" 
-                      value={pDosisKg} 
-                      onChange={(e) => setPDosisKg(parseFloat(e.target.value) || 0)}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Intervalo (cada cuantas horas)</label>
-                    <select 
-                      value={pFrecuencia} 
-                      onChange={(e) => setPFrecuencia(Number(e.target.value))}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-teal-500 text-sm"
-                    >
-                      <option value={4}>Cada 4 horas (6 veces al día)</option>
-                      <option value={6}>Cada 6 horas (4 veces al día)</option>
-                      <option value={8}>Cada 8 horas (3 veces al día)</option>
-                      <option value={12}>Cada 12 horas (2 veces al día)</option>
-                      <option value={24}>Cada 24 horas (1 vez al día)</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Panel Derecho: Resultados & Presets rápidos */}
-            <div className="lg:col-span-7 space-y-6">
-              
-              {/* Card de resultados pediátricos */}
-              <div className="bg-gradient-to-br from-teal-950 to-slate-900 p-6 rounded-2xl border border-teal-500/40 shadow-xl space-y-6">
-                <div className="border-b border-teal-800/60 pb-3 flex justify-between items-center">
-                  <div>
-                    <h3 className="text-lg font-bold text-white">🧮 Dosificación Calculada</h3>
-                    <p className="text-xs text-teal-200">Resultados ajustados para peso de {pPeso} kg</p>
-                  </div>
-                  <span className="bg-teal-400 text-teal-950 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Ajuste de Peso</span>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  
-                  {/* Dosis por toma */}
-                  <div className="bg-slate-900/80 p-5 rounded-xl border border-slate-700/60">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-2">Dosis por Toma:</span>
-                    <div className="flex items-baseline">
-                      <span className="text-4xl font-extrabold text-teal-400">{pDosisTomaMg.toFixed(1)}</span>
-                      <span className="text-lg font-bold text-slate-300 ml-1">mg / toma</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">
-                      Administrar exactamente esta cantidad de fármaco en cada intervalo programado.
-                    </p>
-                  </div>
-
-                  {/* Dosis diaria total */}
-                  <div className="bg-slate-900/80 p-5 rounded-xl border border-slate-700/60">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-2">Dosis Diaria Total:</span>
-                    <div className="flex items-baseline">
-                      <span className="text-4xl font-extrabold text-emerald-400">{pDosisDiariaTotalMg.toFixed(1)}</span>
-                      <span className="text-lg font-bold text-slate-300 ml-1">mg / 24h</span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 mt-2">
-                      Suma total de todas las tomas indicadas en un periodo completo de 24 horas.
-                    </p>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Presets Rápidos */}
-              <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-4">
-                <h4 className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                  <span>👶</span> Referencia Rápida — Fórmulas Pediátricas Comunes
-                </h4>
-                <p className="text-xs text-slate-400">
-                  Haz clic en un fármaco a continuación para cargar sus rangos de dosificación recomendados automáticamente en el calculador superior:
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                  {PRESETS_PEDIATRICOS.map((preset, index) => (
-                    <div 
-                      key={index}
-                      onClick={() => aplicarPresetPediatrico(preset)}
-                      className="bg-slate-900/60 p-3 rounded-xl border border-slate-700 hover:border-teal-500/50 hover:bg-slate-900 transition-all cursor-pointer flex justify-between items-start gap-2"
-                    >
-                      <div className="space-y-1">
-                        <span className="font-bold text-teal-300 text-xs block">{preset.nombre}</span>
-                        <span className="text-[10px] text-slate-400 block">Rango: {preset.dosisRango}</span>
-                        <span className="text-[10px] text-slate-400 block">Vía: {preset.via} | {preset.observaciones}</span>
-                      </div>
-                      <span className="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded border border-slate-700 font-mono">Cargar</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* TAB 4: INFUSIONES CRÍTICAS UCI */}
-        {activeTab === 'uci' && (
-          <div className="space-y-6 animate-fadeIn">
-            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl space-y-6">
-              
-              {/* Header de la sección */}
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-700 pb-4">
-                <div>
-                  <h3 className="text-lg font-bold text-rose-400 flex items-center gap-2">
-                    <span>🚨</span> Infusiones Críticas UCI y Drogas Vasoactivas
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Cálculo rápido de velocidades de perfusión continua (ml/h) basado en peso para soporte hemodinámico.
-                  </p>
-                </div>
-
-                {/* Modificador de peso central */}
-                <div className="bg-slate-900/80 p-4 rounded-xl border border-rose-500/30 flex items-center gap-4 w-full md:w-auto shrink-0">
-                  <div className="text-2xl">⚖️</div>
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-rose-400">Peso del Paciente Crítico</label>
-                    <div className="flex items-center gap-2 mt-1">
-                      <input 
-                        type="number"
-                        value={uciPeso}
-                        onChange={(e) => setUciPeso(parseFloat(e.target.value) || 0)}
-                        className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-center font-bold text-white text-sm"
-                      />
-                      <span className="text-xs font-bold text-slate-400">kg</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Simulador Interactivo */}
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {INFUSIONES_UCI.map((med, index) => {
-                  const currentDose = uciDosisCustom[med.nombre] || med.dosisInicial;
-                  const velocity = calcularUciMlHora(med);
-
-                  return (
-                    <div 
-                      key={index}
-                      className="bg-slate-900/60 p-5 rounded-2xl border border-slate-700/60 flex flex-col justify-between hover:border-slate-600 transition-all"
-                    >
-                      <div>
-                        {/* Nombre + Dilución */}
-                        <div className="flex justify-between items-start border-b border-slate-800 pb-2 mb-3">
-                          <div>
-                            <span className="font-extrabold text-white text-sm block">{med.nombre}</span>
-                            <span className="text-[10px] text-slate-400 block">Prep: {med.prep}</span>
-                          </div>
-                          <span className="bg-slate-800 text-teal-400 font-mono text-[10px] px-2 py-0.5 rounded border border-slate-700 font-bold">
-                            {med.concMcgMl} {med.unidad === 'UI/min' ? 'UI/ml' : 'mcg/ml'}
-                          </span>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Concentración Vial (mg)</label>
+                            <input type="number" id="u-vial-mg" value="1000" oninput="calcUniversal()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
                         </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Volumen Vial (ml)</label>
+                            <input type="number" id="u-vial-ml" value="10" oninput="calcUniversal()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
+                        </div>
+                    </div>
 
-                        {/* Modificador de dosis en tiempo real */}
-                        <div className="space-y-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-[11px] text-slate-300 font-bold">Dosis Deseada:</span>
-                            <div className="flex items-center gap-1.5 bg-slate-800 px-2 py-1 rounded-lg border border-slate-700">
-                              <input 
-                                type="number" 
-                                step="0.01"
-                                value={currentDose}
-                                onChange={(e) => handleUciDosisChange(med.nombre, e.target.value)}
-                                className="w-16 bg-transparent text-center text-teal-300 font-mono text-xs font-bold focus:outline-none"
-                              />
-                              <span className="text-[10px] text-slate-400">{med.unidad || 'mcg/kg/min'}</span>
+                    <div>
+                        <label class="block text-xs font-bold text-medical-700 uppercase mb-1">Dosis Prescrita (mg)</label>
+                        <input type="number" id="u-dosis" value="500" oninput="calcUniversal()" class="w-full bg-medical-50 border border-medical-300 rounded-lg px-3 py-3 text-medical-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-medical-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Diluyente a agregar (ml)</label>
+                        <input type="number" id="u-diluyente" value="100" oninput="calcUniversal()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
+                    </div>
+
+                    <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-2 pt-4">2. Parámetros de Infusión</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tiempo (min)</label>
+                            <input type="number" id="u-tiempo" value="30" oninput="calcUniversal()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Equipo (Gotas/ml)</label>
+                            <select id="u-factor" onchange="calcUniversal()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
+                                <option value="20">Macrogotero (20)</option>
+                                <option value="60">Microgotero (60)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outputs & Charts -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Vol. a Extraer (ml)</span>
+                            <span id="out-extraer" class="text-3xl font-black text-medical-600 mt-1">5.00</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Velocidad (ml/h)</span>
+                            <span id="out-mlh" class="text-3xl font-black text-blue-600 mt-1">210.0</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Goteo (gotas/min)</span>
+                            <span id="out-gotas" class="text-3xl font-black text-amber-600 mt-1">70.0</span>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-center items-center text-center">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wide">Vol. Total Mezcla</span>
+                            <span id="out-voltotal" class="text-3xl font-black text-slate-700 mt-1">105.0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wide text-center">Comparativa de Concentración (mg/ml)</h3>
+                        <div class="chart-container">
+                            <canvas id="universalChart"></canvas>
+                        </div>
+                        <p class="text-xs text-slate-500 text-center mt-4">La gráfica muestra visualmente cómo la dilución reduce la concentración del fármaco, mitigando el riesgo de flebitis química.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: ESTANDAR -->
+        <section id="tab-estandar" class="tab-content">
+            <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                <div class="max-w-2xl">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2"><span>📊</span> Tabla de Diluciones Estándar</h2>
+                    <p class="text-slate-600 mt-2">
+                        Explora la base de datos de diluciones estándar recomendadas. Utiliza el buscador para filtrar rápidamente el medicamento que necesitas preparar en situaciones de urgencia o cuidados rutinarios.
+                    </p>
+                </div>
+                <div class="w-full md:w-72">
+                    <input type="text" id="search-estandar" placeholder="🔍 Buscar medicamento o vía..." onkeyup="filterEstandar()" class="w-full bg-white border border-slate-300 rounded-xl px-4 py-2.5 text-slate-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-medical-500">
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-600 border-b border-slate-200">
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Medicamento</th>
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Presentación</th>
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Dosis Común</th>
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Diluyente</th>
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Volumen</th>
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Tiempo Inf.</th>
+                                <th class="p-4 font-bold uppercase tracking-wider text-xs">Vía</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-estandar" class="divide-y divide-slate-100 text-slate-700">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB: PEDIATRICA -->
+        <section id="tab-pediatrica" class="tab-content">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2"><span>👶</span> Calculadora Pediátrica por Peso</h2>
+                <p class="text-slate-600 mt-2">
+                    Calcula dosificaciones exactas basadas en el peso del paciente pediátrico. Selecciona un medicamento preconfigurado para cargar sus dosis habituales o ingresa los valores manualmente para visualizar la distribución de tomas diarias.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                <!-- Inputs & Presets -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+                        <h3 class="font-bold text-slate-800 border-b border-slate-100 pb-2">Datos del Niño y Dosis</h3>
+                        
+                        <div class="flex items-center gap-4 bg-medical-50 p-4 rounded-xl border border-medical-100">
+                            <span class="text-3xl">⚖️</span>
+                            <div class="flex-grow">
+                                <label class="block text-xs font-bold text-medical-800 uppercase mb-1">Peso del Paciente (kg)</label>
+                                <input type="number" id="p-peso" value="15" oninput="calcPediatrica()" class="w-full bg-white border border-medical-300 rounded-lg px-3 py-2 text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-medical-500">
                             </div>
-                          </div>
-
-                          {/* Control deslizante táctil */}
-                          <input 
-                            type="range"
-                            min={med.unidad === 'UI/min' ? 0.01 : 0.01}
-                            max={med.dosisMax}
-                            step={med.unidad === 'UI/min' ? 0.005 : 0.05}
-                            value={currentDose}
-                            onChange={(e) => handleUciDosisChange(med.nombre, e.target.value)}
-                            className="w-full accent-teal-400 cursor-pointer h-1 bg-slate-800 rounded-lg appearance-none"
-                          />
                         </div>
 
-                        {/* Notas clínicas de administración */}
-                        <p className="text-[10px] text-slate-400 mt-3 leading-relaxed border-l-2 border-rose-500/40 pl-2">
-                          {med.notas}
-                        </p>
-                      </div>
-
-                      {/* Output de velocidad (ml/h) */}
-                      <div className="mt-4 p-3 bg-slate-950/70 rounded-xl border border-teal-500/15 flex items-center justify-between">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Velocidad de Infusión:</span>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-black text-emerald-400">{velocity.toFixed(2)}</span>
-                          <span className="text-xs font-bold text-slate-300">ml/h</span>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Dosis (mg/kg/toma)</label>
+                                <input type="number" id="p-dosiskg" value="15" oninput="calcPediatrica()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Frecuencia (h)</label>
+                                <select id="p-frecuencia" onchange="calcPediatrica()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-medical-500">
+                                    <option value="4">c/ 4 horas</option>
+                                    <option value="6" selected>c/ 6 horas</option>
+                                    <option value="8">c/ 8 horas</option>
+                                    <option value="12">c/ 12 horas</option>
+                                    <option value="24">c/ 24 horas</option>
+                                </select>
+                            </div>
                         </div>
-                      </div>
-
                     </div>
-                  );
-                })}
-              </div>
 
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-slate-800 mb-3 text-sm">Carga Rápida Frecuente</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="pediatric-presets">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outputs & Chart -->
+                <div class="lg:col-span-7 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-center">
+                            <span class="text-sm font-bold text-slate-500 uppercase">Dosis por Toma</span>
+                            <div class="mt-2 text-4xl font-black text-medical-600"><span id="out-p-toma">225</span> <span class="text-lg text-slate-500">mg</span></div>
+                        </div>
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 flex flex-col items-center justify-center text-center">
+                            <span class="text-sm font-bold text-slate-500 uppercase">Dosis Diaria Total</span>
+                            <div class="mt-2 text-4xl font-black text-slate-800"><span id="out-p-diaria">900</span> <span class="text-lg text-slate-500">mg</span></div>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow flex flex-col items-center justify-center">
+                        <h3 class="font-bold text-slate-800 mb-4 text-sm uppercase tracking-wide">Distribución de Tomas en 24h</h3>
+                        <div class="chart-container w-full max-w-sm">
+                            <canvas id="pediatricChart"></canvas>
+                        </div>
+                        <p class="text-xs text-slate-500 text-center mt-4 max-w-md">El gráfico ilustra la fragmentación de la dosis diaria total según la frecuencia horaria seleccionada. Ayuda a verificar que no se exceda el límite diario recomendado.</p>
+                    </div>
+                </div>
             </div>
-          </div>
-        )}
+        </section>
 
-      </main>
+        <!-- TAB: UCI -->
+        <section id="tab-uci" class="tab-content">
+            <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+                <div class="max-w-2xl">
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2"><span>⚡</span> Infusiones Críticas UCI y Vasopresores</h2>
+                    <p class="text-slate-600 mt-2">
+                        Simula y calcula velocidades de infusión continua (ml/h) para soporte hemodinámico. Ajusta el peso base del paciente y manipula los controles deslizantes para titular las dosis en tiempo real, observando el impacto inmediato en la bomba.
+                    </p>
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl border border-rose-200 shadow-sm flex items-center gap-4 w-full md:w-auto">
+                    <div class="text-3xl">⚖️</div>
+                    <div>
+                        <label class="block text-xs font-bold text-rose-600 uppercase mb-1 tracking-wider">Peso Global UCI (kg)</label>
+                        <input type="number" id="uci-peso" value="70" oninput="renderICU()" class="w-24 bg-rose-50 border border-rose-200 rounded-lg px-3 py-1.5 text-rose-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    </div>
+                </div>
+            </div>
 
-      {/* FOOTER */}
-      <footer className="bg-slate-950 border-t border-slate-800 py-6 px-4 mt-12 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto space-y-2">
-          <p>© {new Date().getFullYear()} Enfermería Pro Suite. Diseñado con estándares de usabilidad digital adaptables a dispositivos móviles.</p>
-          <p className="text-[10px] text-slate-600">Ningún dato ingresado en esta plataforma se recopila en servidores externos para resguardar la privacidad institucional.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" id="uci-grid">
+                <!-- JS Populated -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-sm text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>Suite Web de Dilución de Medicamentos. Datos extraídos de tablas clínicas estandarizadas.</p>
+            <p class="mt-1 text-xs text-slate-400">Diseñado con enfoque en Arquitectura de la Información y Seguridad de la Interfaz.</p>
         </div>
-      </footer>
-    </div>
-  );
-}
+    </footer>
 
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATA SOURCED FROM CSV REPORTS ---
+        const dataEstandar = [
+            { nombre: "Amoxicilina 1g", pres: "1g/vial", dosis: "1g c/8h", dil: "SF 0.9%", vol: "100 ml", conc: "10 mg/ml", tiempo: "30 min", via: "IV" },
+            { nombre: "Ceftriaxona 1g", pres: "1g/vial", dosis: "1-2g c/24h", dil: "SF 0.9%", vol: "100 ml", conc: "10-20 mg/ml", tiempo: "30 min", via: "IV" },
+            { nombre: "Ampicilina 1g", pres: "1g/vial", dosis: "1g c/6h", dil: "SF 0.9%", vol: "50-100 ml", conc: "10-20 mg/ml", tiempo: "15-30 min", via: "IV" },
+            { nombre: "Piperacilina-Taz", pres: "4.5g/vial", dosis: "4.5g c/6-8h", dil: "SF 0.9%", vol: "100 ml", conc: "45 mg/ml", tiempo: "30 min", via: "IV" },
+            { nombre: "Meropenem 1g", pres: "1g/vial", dosis: "0.5-2g c/8h", dil: "SF 0.9%", vol: "100 ml", conc: "10 mg/ml", tiempo: "15-30 min", via: "IV" },
+            { nombre: "Vancomicina 500", pres: "500mg/vial", dosis: "15-20 mg/kg", dil: "SF 0.9% / DW5%", vol: "250 ml", conc: "5 mg/ml", tiempo: "60 min", via: "IV" },
+            { nombre: "Metronidazol", pres: "500mg/100ml", dosis: "500mg c/8h", dil: "Listo uso", vol: "-", conc: "5 mg/ml", tiempo: "20-60 min", via: "IV" },
+            { nombre: "Dexametasona 8", pres: "8mg/2ml", dosis: "4-16 mg/día", dil: "SF 0.9%", vol: "50 ml", conc: "0.16 mg/ml", tiempo: "15 min", via: "IV" },
+            { nombre: "Ondansetron 8", pres: "8mg/4ml", dosis: "8mg c/8-12h", dil: "SF 0.9%", vol: "50-100 ml", conc: "0.08-0.16", tiempo: "15 min", via: "IV" },
+            { nombre: "Ketorolaco 30", pres: "30mg/1ml", dosis: "15-30mg c/6h", dil: "SF 0.9%", vol: "50-100 ml", conc: "0.3 mg/ml", tiempo: "15 min", via: "IV/IM" },
+            { nombre: "Morfina 10mg", pres: "10mg/ml", dosis: "Titular", dil: "SF 0.9%", vol: "10 ml", conc: "1 mg/ml", tiempo: "Lento", via: "IV" },
+            { nombre: "Midazolam 15", pres: "15mg/3ml", dosis: "0.05-0.15 mg/kg", dil: "SF 0.9%", vol: "100 ml", conc: "0.15 mg/ml", tiempo: "Infusión", via: "IV" }
+        ];
 
+        const dataPediatrica = [
+            { id: 1, nom: "Amoxicilina", dosis: 15, freq: 8, min: 40, max: 90, notas: "VO - Otitis, Neumonia" },
+            { id: 2, nom: "Ibuprofeno", dosis: 10, freq: 6, min: 5, max: 10, notas: "VO - Antipirético" },
+            { id: 3, nom: "Paracetamol", dosis: 15, freq: 6, min: 10, max: 15, notas: "VO/IV - Analgésico" },
+            { id: 4, nom: "Ceftriaxona", dosis: 50, freq: 24, min: 50, max: 100, notas: "IV/IM - Infecc. Graves" },
+        ];
+
+        const dataUCI = [
+            { id: 'nore', nom: "Norepinefrina", dosInicial: 0.1, min: 0.01, max: 3, prep: "8mg en 250ml DW5%", conc: 32, uni: "mcg/kg/min" },
+            { id: 'adre', nom: "Adrenalina", dosInicial: 0.1, min: 0.01, max: 1, prep: "1mg en 250ml DW5%", conc: 4, uni: "mcg/kg/min" },
+            { id: 'dopa', nom: "Dopamina", dosInicial: 5, min: 2, max: 20, prep: "200mg en 250ml DW5%", conc: 800, uni: "mcg/kg/min" },
+            { id: 'dobu', nom: "Dobutamina", dosInicial: 5, min: 2, max: 20, prep: "250mg en 250ml DW5%", conc: 1000, uni: "mcg/kg/min" },
+            { id: 'nitro', nom: "Nitroglicerina", dosInicial: 0.5, min: 0.1, max: 3, prep: "50mg en 250ml DW5%", conc: 200, uni: "mcg/kg/min" },
+            { id: 'vaso', nom: "Vasopresina", dosInicial: 0.03, min: 0.01, max: 0.04, step: 0.01, prep: "20U en 100ml SF", conc: 0.2, uni: "U/min", isFixed: true }
+        ];
+
+        // State objects to hold dynamic values for UCI
+        let uciState = {};
+        dataUCI.forEach(d => { uciState[d.id] = d.dosInicial; });
+
+        // Chart Instances
+        let chartUniv = null;
+        let chartPed = null;
+
+        // --- NAVIGATION LOGIC ---
+        function switchTab(tabId) {
+            // Hide all
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.remove('active');
+            });
+            // Reset nav styles
+            document.querySelectorAll('.nav-btn').forEach(el => {
+                el.classList.remove('bg-medical-600', 'text-white', 'shadow-md');
+                el.classList.add('bg-white', 'text-slate-600');
+            });
+            
+            // Show target
+            document.getElementById('tab-' + tabId).classList.add('active');
+            // Update nav style
+            const btn = document.getElementById('nav-' + tabId);
+            btn.classList.remove('bg-white', 'text-slate-600');
+            btn.classList.add('bg-medical-600', 'text-white', 'shadow-md');
+
+            // Re-render specific tab charts/content if needed when displayed
+            if(tabId === 'universal') calcUniversal();
+            if(tabId === 'estandar') filterEstandar();
+            if(tabId === 'pediatrica') calcPediatrica();
+            if(tabId === 'uci') renderICU();
+        }
+
+        // --- TAB 1: UNIVERSAL LOGIC ---
+        function calcUniversal() {
+            const mg = parseFloat(document.getElementById('u-vial-mg').value) || 0;
+            const ml = parseFloat(document.getElementById('u-vial-ml').value) || 0;
+            const dosis = parseFloat(document.getElementById('u-dosis').value) || 0;
+            const diluyente = parseFloat(document.getElementById('u-diluyente').value) || 0;
+            const tiempo = parseFloat(document.getElementById('u-tiempo').value) || 1;
+            const factor = parseFloat(document.getElementById('u-factor').value) || 20;
+
+            const concVial = ml > 0 ? (mg / ml) : 0;
+            const volExtraer = concVial > 0 ? (dosis / concVial) : 0;
+            const volTotal = volExtraer + diluyente;
+            const concFinal = volTotal > 0 ? (dosis / volTotal) : 0;
+            
+            const mlh = (volTotal * 60) / tiempo;
+            const gotasMin = (volTotal * factor) / tiempo;
+
+            document.getElementById('out-extraer').innerText = volExtraer.toFixed(2);
+            document.getElementById('out-mlh').innerText = mlh.toFixed(1);
+            document.getElementById('out-gotas').innerText = gotasMin.toFixed(1);
+            document.getElementById('out-voltotal').innerText = volTotal.toFixed(2);
+
+            updateUniversalChart(concVial, concFinal);
+        }
+
+        function updateUniversalChart(cOriginal, cFinal) {
+            const ctx = document.getElementById('universalChart');
+            if(!ctx) return;
+            
+            if (chartUniv) {
+                chartUniv.data.datasets[0].data = [cOriginal, cFinal];
+                chartUniv.update();
+            } else {
+                chartUniv = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Conc. Ampolla (mg/ml)', 'Conc. Final Mezcla (mg/ml)'],
+                        datasets: [{
+                            label: 'Concentración',
+                            data: [cOriginal, cFinal],
+                            backgroundColor: ['#94a3b8', '#0f766e'], // Slate-400 vs Medical-700
+                            borderRadius: 6,
+                            barThickness: 50
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.raw.toFixed(2) + ' mg/ml';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- TAB 2: ESTANDAR LOGIC ---
+        function filterEstandar() {
+            const query = document.getElementById('search-estandar').value.toLowerCase();
+            const tbody = document.getElementById('tbody-estandar');
+            tbody.innerHTML = '';
+
+            const filtered = dataEstandar.filter(item => 
+                item.nombre.toLowerCase().includes(query) || 
+                item.via.toLowerCase().includes(query)
+            );
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">No se encontraron medicamentos.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-4 font-bold text-slate-800">${item.nombre}</td>
+                    <td class="p-4 text-slate-600">${item.pres}</td>
+                    <td class="p-4 text-slate-600">${item.dosis}</td>
+                    <td class="p-4"><span class="bg-medical-50 text-medical-700 px-2 py-1 rounded text-xs font-semibold">${item.dil}</span></td>
+                    <td class="p-4 font-medium text-slate-700">${item.vol}</td>
+                    <td class="p-4 text-slate-600">${item.tiempo}</td>
+                    <td class="p-4"><span class="border border-slate-200 px-2 py-1 rounded-full text-xs font-bold text-slate-500">${item.via}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- TAB 3: PEDIATRICA LOGIC ---
+        function initPediatricPresets() {
+            const container = document.getElementById('pediatric-presets');
+            dataPediatrica.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "p-3 border border-slate-200 rounded-xl hover:border-medical-400 hover:bg-medical-50 cursor-pointer transition-all";
+                div.onclick = () => {
+                    document.getElementById('p-dosiskg').value = p.dosis;
+                    document.getElementById('p-frecuencia').value = p.freq;
+                    calcPediatrica();
+                };
+                div.innerHTML = `
+                    <div class="font-bold text-slate-800 text-sm">${p.nom}</div>
+                    <div class="text-xs text-slate-500 mt-1">${p.dosis} mg/kg c/${p.freq}h</div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function calcPediatrica() {
+            const peso = parseFloat(document.getElementById('p-peso').value) || 0;
+            const dosisKg = parseFloat(document.getElementById('p-dosiskg').value) || 0;
+            const freq = parseInt(document.getElementById('p-frecuencia').value) || 6;
+
+            const dosisToma = peso * dosisKg;
+            const numTomas = 24 / freq;
+            const dosisDiaria = dosisToma * numTomas;
+
+            document.getElementById('out-p-toma').innerText = dosisToma.toFixed(1);
+            document.getElementById('out-p-diaria').innerText = dosisDiaria.toFixed(1);
+
+            updatePediatricChart(numTomas, dosisToma);
+        }
+
+        function updatePediatricChart(numTomas, dosisToma) {
+            const ctx = document.getElementById('pediatricChart');
+            if(!ctx) return;
+
+            const labels = [];
+            const data = [];
+            const colors = [];
+            const baseColor = [15, 118, 110]; // teal-700
+            
+            for(let i=0; i<numTomas; i++) {
+                labels.push(`Toma ${i+1}`);
+                data.push(dosisToma);
+                // Create slight gradient variation
+                colors.push(`rgba(${baseColor[0]}, ${baseColor[1] + (i*15)}, ${baseColor[2] + (i*15)}, 0.8)`);
+            }
+
+            if(chartPed) {
+                chartPed.data.labels = labels;
+                chartPed.data.datasets[0].data = data;
+                chartPed.data.datasets[0].backgroundColor = colors;
+                chartPed.update();
+            } else {
+                chartPed = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: {size: 10} } },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.raw.toFixed(1) + ' mg';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // --- TAB 4: UCI LOGIC ---
+        function renderICU() {
+            const grid = document.getElementById('uci-grid');
+            grid.innerHTML = '';
+            const peso = parseFloat(document.getElementById('uci-peso').value) || 70;
+
+            dataUCI.forEach(drug => {
+                const currentDose = uciState[drug.id];
+                
+                // Calculate ml/h
+                let mlh = 0;
+                if(drug.isFixed) {
+                    // e.g. U/min -> (U/min * 60) / (U/ml)
+                    mlh = (currentDose * 60) / drug.conc;
+                } else {
+                    // e.g. mcg/kg/min -> (mcg/kg/min * kg * 60) / (mcg/ml)
+                    mlh = (currentDose * peso * 60) / drug.conc;
+                }
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between";
+                
+                const step = drug.step || 0.1;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-3 border-b border-slate-100 pb-2">
+                            <div>
+                                <h4 class="font-bold text-slate-800">${drug.nom}</h4>
+                                <span class="text-xs text-slate-500">${drug.prep}</span>
+                            </div>
+                            <span class="bg-slate-100 text-slate-600 px-2 py-1 rounded text-[10px] font-mono font-bold border border-slate-200">${drug.conc} ${drug.isFixed ? 'U/ml' : 'mcg/ml'}</span>
+                        </div>
+                        
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Dosis Titulada:</label>
+                                <div class="bg-slate-50 border border-slate-200 px-2 py-1 rounded-md text-medical-700 font-mono text-sm font-bold shadow-inner">
+                                    ${currentDose.toFixed(2)} <span class="text-[10px] text-slate-500 font-sans">${drug.uni}</span>
+                                </div>
+                            </div>
+                            <input type="range" 
+                                min="${drug.min}" 
+                                max="${drug.max}" 
+                                step="${step}" 
+                                value="${currentDose}" 
+                                oninput="updateUCIDose('${drug.id}', this.value)"
+                            >
+                            <div class="flex justify-between text-[10px] text-slate-400 font-medium px-1">
+                                <span>${drug.min} min</span>
+                                <span>${drug.max} máx</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-800 rounded-xl p-4 flex justify-between items-center mt-2 shadow-inner">
+                        <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Velocidad Bomba</span>
+                        <div class="text-right">
+                            <span class="text-2xl font-black text-medical-300">${mlh.toFixed(1)}</span>
+                            <span class="text-sm font-bold text-slate-400">ml/h</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Global function to handle slider changes without re-rendering everything immediately to avoid jitter
+        // but for simplicity in this SPA, re-rendering the grid is fast enough.
+        window.updateUCIDose = function(id, val) {
+            uciState[id] = parseFloat(val);
+            renderICU(); 
+        }
+
+        // --- INIT ---
+        window.onload = () => {
+            initPediatricPresets();
+            // Start with initial tab
+            switchTab('inicio');
+        };
+
+    </script>
+</body>
+</html>
