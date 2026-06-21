@@ -1,2 +1,2 @@
 # dilucion-pro
-"Suite interactiva de dilución de medicamentos para enfermería".
+"Suite interactiva de dilución de medicamentos para emergencias".
